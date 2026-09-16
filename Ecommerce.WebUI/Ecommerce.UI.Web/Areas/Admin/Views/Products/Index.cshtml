@@ -1,0 +1,177 @@
+@model Ecommerce.UI.ViewModel.ProductViewModel
+
+@{
+    ViewData["Title"] = "Product Dashboard";
+}
+
+<div class="container">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <h2 class="mb-4">Product Dashboard</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Filters</h5>
+        </div>
+        <div class="card-body">
+            <form asp-area="Admin" asp-controller="Products" asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select name="categoryId" class="form-select" id="categorySelect">
+                        <option value="">All Categories</option>
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <option value="@cat.Id" selected="@(Model.SelectedCategoryId == cat.Id ? "selected" : null)">@cat.Category</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sub-Category</label>
+                    <select name="subCategoryId" class="form-select" id="subCategorySelect">
+                        <option value="">All Sub-Categories</option>
+                        @foreach (var sub in Model.SubCategories.Where(s => !Model.SelectedCategoryId.HasValue || s.CategoryId == Model.SelectedCategoryId.Value))
+                        {
+                            <option value="@sub.Id" selected="@(Model.SelectedSubCategoryId == sub.Id ? "selected" : null)">@sub.SubCategory</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Gender</label>
+                    <select name="genderId" class="form-select">
+                        <option value="">All Genders</option>
+                        @foreach (var gen in Model.Genders)
+                        {
+                            <option value="@gen.Id" selected="@(Model.SelectedGenderId == gen.Id ? "selected" : null)">@gen.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Products</h4>
+        <a href="/Admin/Products/Create" class="btn btn-success">+ Add New Product</a>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Sub-Category</th>
+                <th>Gender</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody >
+            @foreach (var p in Model.FilteredProducts)
+            {
+                var categoryName = Model.Categories.FirstOrDefault(c => c.Id == p.CategoryId)?.Category ?? $"ID {p.CategoryId}";
+                var subCategoryName = Model.SubCategories.FirstOrDefault(s => s.Id == p.SubCategoryId)?.SubCategory ?? $"ID {p.SubCategoryId}";
+                var genderName = Model.Genders.FirstOrDefault(g => g.Id == p.GenderId)?.Name ?? $"ID {p.GenderId}";
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.ProductName</td>
+                    <td>@p.Price.ToString("C")</td>
+                    <td>@categoryName</td>
+                    <td>@subCategoryName</td>
+                    <td>@genderName</td>
+                    <td>@(p.IsActive ? "Active" : "Inactive")</td>
+                    <td>
+                        <a href="/Admin/Products/Edit/@p.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteProduct(@p.Id, this)">Delete</button>
+                    </td>
+                </tr>
+            }
+            @if (!Model.FilteredProducts.Any())
+            {
+                <tr>
+                    <td colspan="8" class="text-center">No products found matching the criteria.</td>
+                </tr>
+            }
+        </tbody >
+    </table >
+</div >
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Products Index page loaded and jQuery is ready!");
+            $('#categorySelect').change(function () {
+                var categoryId = $(this).val();
+                var $subCatSelect = $('#subCategorySelect');
+
+                $subCatSelect.empty().append('<option value="">Loading...</option>');
+
+                if (!categoryId) {
+                    $subCatSelect.empty().append('<option value="">All Sub-Categories</option>');
+                    return;
+                }
+
+                $.getJSON('https://localhost:7156/api/Product/categories/' + categoryId + '/subcategories', function (data) {
+                    $subCatSelect.empty().append('<option value="">All Sub-Categories</option>');
+                    $.each(data, function (i, item) {
+                        $subCatSelect.append($('<option>', {
+                            value: item.id || item.Id,
+                            text: item.subCategory || item.SubCategory
+                        }));
+                    });
+                }).fail(function(xhr, status, error) {
+                    console.error("Error fetching subcategories: ", error);
+                    $subCatSelect.empty().append('<option value="">Error loading sub-categories</option>');
+                });
+            });
+        });
+
+        function deleteProduct(id, btn) {
+            if (!confirm('Are you sure you want to delete this product?')) {
+                return;
+            }
+
+            var $btn = $(btn);
+            var $row = $btn.closest('tr');
+            var originalText = $btn.text();
+
+            $btn.prop('disabled', true).text('Deleting...');
+
+            $.ajax({
+                url: '/Admin/Products/DeleteAjax',
+                type: 'POST',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success) {
+                        $row.fadeOut(400, function() { $(this).remove(); });
+                        alert(response.message);
+                    } else {
+                        alert('Error: ' + response.message);
+                        $btn.prop('disabled', false).text(originalText);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Deletion error:", error);
+                    alert('An unexpected error occurred while deleting the product.');
+                    $btn.prop('disabled', false).text(originalText);
+                }
+            });
+        }
+    </script>
+}

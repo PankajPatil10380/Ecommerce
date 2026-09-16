@@ -1,0 +1,16 @@
+# Local development config (may contain secrets / connection strings)
+appsettings.Development.json
+
+# Local database files
+*.db
+*.db-journal
+
+# Logs
+*.log
+logs/
+
+# NuGet local cache (if restored locally)
+packages/
+
+# EF Core migrations snapshots (auto-generated, regenerate as needed)
+**/Migrations/*.Designer.cs

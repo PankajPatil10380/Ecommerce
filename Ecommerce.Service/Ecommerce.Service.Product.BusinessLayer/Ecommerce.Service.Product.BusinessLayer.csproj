@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Ecommerce.Service.Product.BusinessLayer</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ecommerce.Service.Product.DataLayer\Ecommerce.Service.Product.DataLayer.csproj" />
+    <ProjectReference Include="..\Ecommerce.Service.Product.Domain.Product\Ecommerce.Service.Product.Domain.Product.csproj" />
+    <ProjectReference Include="..\Ecommerce.Common\Ecommerce.Common.csproj" />
+  </ItemGroup>
+
+</Project>

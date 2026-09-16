@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Ecommerce.Common/Ecommerce.Common.csproj" />
+  <Project Path="Ecommerce.Service.Product.BusinessLayer/Ecommerce.Service.Product.BusinessLayer.csproj" />
+  <Project Path="Ecommerce.Service.Product.DataLayer/Ecommerce.Service.Product.DataLayer.csproj" />
+  <Project Path="Ecommerce.Service.Product.Domain.Product/Ecommerce.Service.Product.Domain.Product.csproj" />
+  <Project Path="Ecommerce.Service.Product.WebAPI/Ecommerce.Service.Product.WebAPI.csproj" />
+</Solution>

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Ecommerce.UI.ServiceLayer/Ecommerce.UI.ServiceLayer.csproj" />
+  <Project Path="Ecommerce.UI.ViewModel/Ecommerce.UI.ViewModel.csproj" />
+  <Project Path="Ecommerce.UI.Web/Ecommerce.UI.Web.csproj" />
+</Solution>
