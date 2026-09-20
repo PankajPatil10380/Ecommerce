@@ -33,4 +33,15 @@ namespace Ecommerce.UI.ViewModel
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
+
+    public class LogDto
+    {
+        public int Id { get; set; }
+        public string LogLevel { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string? Message { get; set; }
+        public string? TableName { get; set; }
+        public int? RecordId { get; set; }
+        public DateTime CreatedDate { get; set; }
+    }
 }

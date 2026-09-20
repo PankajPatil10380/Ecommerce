@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using Ecommerce.UI.ViewModel;
 using Ecommerce.UI.ServiceLayer;
@@ -10,15 +11,17 @@ namespace Ecommerce.UI.Web.Areas.Admin.Controllers
     public class ProductsController : Controller
     {
         private readonly ProductServiceClient _productService;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(ProductServiceClient productService)
+        public ProductsController(ProductServiceClient productService, ILogger<ProductsController> logger)
         {
             _productService = productService;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index(int? categoryId, int? subCategoryId, int? genderId)
         {
-            Console.WriteLine("ProductController Index Action called!");
+            _logger.LogInformation("Products Index Action called with CategoryId={CategoryId}, SubCategoryId={SubCategoryId}, GenderId={GenderId}", categoryId, subCategoryId, genderId);
             var model = new ProductViewModel
             {
                 Categories = await _productService.GetCategoriesAsync(),
@@ -133,19 +136,6 @@ namespace Ecommerce.UI.Web.Areas.Admin.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Delete([FromForm] int id)
-        {
-            var success = await _productService.DeleteProductAsync(id);
-            if (success)
-            {
-                TempData["Success"] = "Product deleted successfully!";
-                return RedirectToAction("Index");
-            }
-            TempData["Error"] = "Failed to delete product. It might be linked to existing orders.";
-            return RedirectToAction("Index");
         }
 
         [HttpPost]

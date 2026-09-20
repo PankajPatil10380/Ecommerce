@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Ecommerce.Common.Entities;
 using Ecommerce.Common.Interfaces;
@@ -9,6 +10,7 @@ namespace Ecommerce.Common.Services
     {
         Task LogAsync(string logLevel, string action, string message, string? tableName = null, int? recordId = null);
         Task<int> GetLogsCountAsync();
+        Task<List<Log>> GetLogsAsync(int count = 50);
     }
 
     public class LoggingService : ILoggingService
@@ -38,6 +40,11 @@ namespace Ecommerce.Common.Services
         public async Task<int> GetLogsCountAsync()
         {
             return await _logRepository.GetCountAsync();
+        }
+
+        public async Task<List<Log>> GetLogsAsync(int count = 50)
+        {
+            return await _logRepository.GetLogsAsync(count);
         }
     }
 }

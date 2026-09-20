@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Ecommerce.Service.Product.DataLayer.Repository;
 using Ecommerce.Service.Product.Domain.Entities;
 using Ecommerce.Service.Product.BusinessLayer.Dtos;
+using Ecommerce.Common.Entities;
 using Ecommerce.Common.Services;
 
 namespace Ecommerce.Service.Product.BusinessLayer
@@ -16,6 +18,7 @@ namespace Ecommerce.Service.Product.BusinessLayer
         Task<bool> DeleteProductAsync(int id);
         Task<string> UpsertProductAsync(ProductDto productDto);
         Task<int> GetLogsCountAsync();
+        Task<List<Log>> GetLogsAsync(int count = 50);
         Task<List<ProductCategory>> GetCategoriesAsync();
         Task<List<SubProductCategory>> GetSubCategoriesAsync(int categoryId);
         Task<List<SubProductCategory>> GetAllSubCategoriesAsync();
@@ -27,11 +30,13 @@ namespace Ecommerce.Service.Product.BusinessLayer
     {
         private readonly IProductRepository _productRepository;
         private readonly ILoggingService _loggingService;
+        private readonly ILogger<ProductManager> _logger;
 
-        public ProductManager(IProductRepository productRepository, ILoggingService loggingService)
+        public ProductManager(IProductRepository productRepository, ILoggingService loggingService, ILogger<ProductManager> logger)
         {
             _productRepository = productRepository;
             _loggingService = loggingService;
+            _logger = logger;
         }
 
         public async Task<ProductDto> GetProductAsync(int id)
@@ -203,6 +208,11 @@ namespace Ecommerce.Service.Product.BusinessLayer
         public async Task<int> GetLogsCountAsync()
         {
             return await _loggingService.GetLogsCountAsync();
+        }
+
+        public async Task<List<Log>> GetLogsAsync(int count = 50)
+        {
+            return await _loggingService.GetLogsAsync(count);
         }
 
         public async Task<List<ProductCategory>> GetCategoriesAsync()

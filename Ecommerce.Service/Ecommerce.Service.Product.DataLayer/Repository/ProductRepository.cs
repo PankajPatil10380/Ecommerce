@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Ecommerce.Service.Product.Domain.Entities;
 using Ecommerce.Service.Product.DataLayer;
@@ -32,91 +34,129 @@ namespace Ecommerce.Service.Product.DataLayer.Repository
 
         public async Task<Ecommerce.Service.Product.Domain.Entities.Product> GetProductByIdAsync(int productId)
         {
-            return await _context.Products
-                .Include(p => p.SubCategory)
-                .Include(p => p.Gender)
-                .FirstOrDefaultAsync(p => p.Id == productId);
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open) await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "GetProductDetails";
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add(new SqlParameter("@ProductId", productId));
+
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var product = new Ecommerce.Service.Product.Domain.Entities.Product
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    SubCategoryId = reader.GetInt32(reader.GetOrdinal("SubCategoryId")),
+                    ProductName = reader.GetString(reader.GetOrdinal("ProductName")),
+                    Description = !reader.IsDBNull(reader.GetOrdinal("Description")) ? reader.GetString(reader.GetOrdinal("Description")) : string.Empty,
+                    Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                    GenderId = reader.GetInt32(reader.GetOrdinal("GenderId")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                };
+
+                int catIdOrdinal = -1;
+                try { catIdOrdinal = reader.GetOrdinal("CategoryId"); } catch { }
+                int categoryId = (catIdOrdinal >= 0 && !reader.IsDBNull(catIdOrdinal)) ? reader.GetInt32(catIdOrdinal) : 0;
+
+                product.SubCategory = new SubProductCategory
+                {
+                    Id = product.SubCategoryId,
+                    CategoryId = categoryId
+                };
+
+                return product;
+            }
+
+            return null!;
         }
 
         public async Task<int> InsertProductAsync(Ecommerce.Service.Product.Domain.Entities.Product product)
         {
-            await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
-            return product.Id;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open) await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "InsertProductDetails";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new SqlParameter("@SubCategoryId", product.SubCategoryId));
+            command.Parameters.Add(new SqlParameter("@ProductName", product.ProductName));
+            command.Parameters.Add(new SqlParameter("@Description", (object?)product.Description ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Price", product.Price));
+            command.Parameters.Add(new SqlParameter("@GenderId", product.GenderId));
+            command.Parameters.Add(new SqlParameter("@IsActive", product.IsActive));
+
+            var result = await command.ExecuteScalarAsync();
+            int newId = result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+            product.Id = newId;
+            return newId;
         }
 
         public async Task<bool> DeleteProductAsync(int productId)
         {
-            var product = await _context.Products.FindAsync(productId);
-            if (product == null) return false;
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open) await connection.OpenAsync();
 
-            // Remove associated orders first to avoid FK constraint violations
-            var orders = await _context.Orders
-                .Where(o => o.ProductId == productId)
-                .ToListAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DeleteProductDetails";
+            command.CommandType = CommandType.StoredProcedure;
 
-            if (orders.Any())
-            {
-                var orderIds = orders.Select(o => o.Id).ToList();
+            command.Parameters.Add(new SqlParameter("@ProductId", productId));
 
-                // Remove all transactions linked to these orders
-                var transactions = await _context.Transactions
-                    .Where(t => orderIds.Contains(t.OrderId))
-                    .ToListAsync();
-
-                if (transactions.Any())
-                {
-                    _context.Transactions.RemoveRange(transactions);
-                }
-
-                // Remove the orders
-                _context.Orders.RemoveRange(orders);
-            }
-
-            // Finally, remove the product
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return true;
+            var result = await command.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value && Convert.ToInt32(result) > 0;
         }
 
         public async Task<bool> UpdateProductAsync(Ecommerce.Service.Product.Domain.Entities.Product product)
         {
-            _context.Products.Update(product);
-            try
-            {
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return false;
-            }
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open) await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "UpdateProductDetails";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new SqlParameter("@ProductId", product.Id));
+            command.Parameters.Add(new SqlParameter("@SubCategoryId", product.SubCategoryId));
+            command.Parameters.Add(new SqlParameter("@ProductName", product.ProductName));
+            command.Parameters.Add(new SqlParameter("@Description", (object?)product.Description ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Price", product.Price));
+            command.Parameters.Add(new SqlParameter("@GenderId", product.GenderId));
+            command.Parameters.Add(new SqlParameter("@IsActive", product.IsActive));
+
+            var result = await command.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value && Convert.ToInt32(result) > 0;
         }
 
         public async Task<string> SetProductDetailsAsync(Ecommerce.Service.Product.Domain.Entities.Product product)
         {
-            if (product.Id == 0)
-            {
-                await _context.Products.AddAsync(product);
-                await _context.SaveChangesAsync();
-                return $"Product created successfully with ID: {product.Id}";
-            }
-            else
-            {
-                var existingProduct = await _context.Products.FindAsync(product.Id);
-                if (existingProduct == null) return "Product not found";
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open) await connection.OpenAsync();
 
-                existingProduct.ProductName = product.ProductName;
-                existingProduct.Description = product.Description;
-                existingProduct.Price = product.Price;
-                existingProduct.SubCategoryId = product.SubCategoryId;
-                existingProduct.GenderId = product.GenderId;
-                existingProduct.IsActive = product.IsActive;
+            using var command = connection.CreateCommand();
+            command.CommandText = "SetProductDetails";
+            command.CommandType = CommandType.StoredProcedure;
 
-                await _context.SaveChangesAsync();
-                return "Product updated successfully";
+            command.Parameters.Add(new SqlParameter("@ProductId", product.Id > 0 ? product.Id : (object)DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@SubCategoryId", product.SubCategoryId));
+            command.Parameters.Add(new SqlParameter("@ProductName", product.ProductName));
+            command.Parameters.Add(new SqlParameter("@Description", (object?)product.Description ?? DBNull.Value));
+            command.Parameters.Add(new SqlParameter("@Price", product.Price));
+            command.Parameters.Add(new SqlParameter("@GenderId", product.GenderId));
+            command.Parameters.Add(new SqlParameter("@IsActive", product.IsActive));
+
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                int msgOrdinal = reader.GetOrdinal("Message");
+                return !reader.IsDBNull(msgOrdinal) ? reader.GetString(msgOrdinal) : "Success";
             }
+
+            return "No response from stored procedure";
         }
+
 
         public async Task<List<ProductCategory>> GetCategoriesAsync()
         {
