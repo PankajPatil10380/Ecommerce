@@ -1,0 +1,70 @@
+@model Ecommerce.UI.ViewModel.LoginViewModel
+@{
+    ViewData["Title"] = "Log In";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0 fw-bold">Sign In</h4>
+                <small class="opacity-75">Ecommerce Management Portal</small>
+            </div>
+            <div class="card-body p-4">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <form asp-action="Login" method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label fw-semibold">Username</label>
+                        <input asp-for="Username" class="form-control" placeholder="e.g. admin or user" required autofocus />
+                        <span asp-validation-for="Username" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="••••••••" required />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">Log In</button>
+                    </div>
+                </form>
+
+                <div class="alert alert-info mt-4 mb-0 py-2 small">
+                    <strong>Default Credentials:</strong><br />
+                    • Admin: <code>admin</code> / <code>Admin@123</code><br />
+                    • User: <code>user</code> / <code>User@123</code>
+                </div>
+            </div>
+            <div class="card-footer bg-light text-center py-3">
+                <span class="text-muted">Don't have an account? </span>
+                <a asp-action="Register" class="fw-semibold text-decoration-none">Register here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

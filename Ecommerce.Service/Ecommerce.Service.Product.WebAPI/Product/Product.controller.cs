@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Ecommerce.Service.Product.BusinessLayer;
 using Ecommerce.Service.Product.BusinessLayer.Dtos;
@@ -20,6 +21,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProduct(int id)
         {
             try
@@ -41,6 +43,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductDto product)
         {
             try
@@ -57,6 +60,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProduct([FromBody] ProductDto product)
         {
             try
@@ -78,6 +82,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             try
@@ -99,6 +104,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("logs")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetLogs([FromQuery] int count = 50)
         {
             _logger.LogInformation("Fetching latest {Count} audit logs", count);
@@ -107,6 +113,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("logs/count")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetLogsCount()
         {
             var count = await _productManager.GetLogsCountAsync();
@@ -114,6 +121,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("categories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _productManager.GetCategoriesAsync();
@@ -121,6 +129,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("categories/{categoryId}/subcategories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetSubCategories(int categoryId)
         {
             var subCategories = await _productManager.GetSubCategoriesAsync(categoryId);
@@ -128,6 +137,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("subcategories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllSubCategories()
         {
             var subCategories = await _productManager.GetAllSubCategoriesAsync();
@@ -135,6 +145,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("genders")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetGenders()
         {
             var genders = await _productManager.GetGendersAsync();
@@ -142,6 +153,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpGet("products")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProducts([FromQuery] int? categoryId, [FromQuery] int? subCategoryId, [FromQuery] int? genderId)
         {
             var products = await _productManager.GetProductsAsync(categoryId, subCategoryId, genderId);
@@ -149,6 +161,7 @@ namespace Ecommerce.Service.Product.WebAPI
         }
 
         [HttpPost("upsert")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpsertProduct([FromBody] ProductDto product)
         {
             try

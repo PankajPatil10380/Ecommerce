@@ -44,4 +44,30 @@ namespace Ecommerce.UI.ViewModel
         public int? RecordId { get; set; }
         public DateTime CreatedDate { get; set; }
     }
+
+    public class LoginViewModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string? ReturnUrl { get; set; }
+    }
+
+    public class RegisterViewModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string? FullName { get; set; }
+        public string Role { get; set; } = "User";
+    }
+
+    public class AuthResultDto
+    {
+        public bool IsSuccess { get; set; }
+        public string? Token { get; set; }
+        public string? Username { get; set; }
+        public string? Role { get; set; }
+        public DateTime? ExpiresAt { get; set; }
+        public string? Message { get; set; }
+    }
 }

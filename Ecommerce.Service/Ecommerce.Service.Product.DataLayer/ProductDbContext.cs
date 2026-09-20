@@ -17,10 +17,26 @@ namespace Ecommerce.Service.Product.DataLayer
         public DbSet<Order> Orders { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Log> Logs { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // User Configuration
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.Username).IsUnique();
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.PasswordSalt).IsRequired();
+                entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.FullName).HasMaxLength(100);
+            });
 
             // Product Configuration
             modelBuilder.Entity<Ecommerce.Service.Product.Domain.Entities.Product>(entity =>

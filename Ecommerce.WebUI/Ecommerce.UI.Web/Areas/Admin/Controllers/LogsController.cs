@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using Ecommerce.UI.ServiceLayer;
 namespace Ecommerce.UI.Web.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin")]
     public class LogsController : Controller
     {
         private readonly ProductServiceClient _productService;
